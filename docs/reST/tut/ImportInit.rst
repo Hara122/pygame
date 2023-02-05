@@ -1,76 +1,83 @@
-.. TUTORIAL:Import and Initialize
+import pygame
+import sys
+import random
 
-.. include:: common.txt
+# Initialize Pygame
+pygame.init()
 
-********************************************
-  Pygame Tutorials - Import and Initialize
-********************************************
- 
-Import and Initialize
-=====================
+# Set up the window
+window_size = (400, 708)
+screen = pygame.display.set_mode(window_size)
 
-.. rst-class:: docinfo
+# Load the bird image
+bird_image = pygame.image.load("bird.png")
+bird_rect = bird_image.get_rect()
 
-:Author: Pete Shinners
-:Contact: pete@shinners.org
+# Load the pipe image
+pipe_image = pygame.image.load("pipe.png")
+pipe_rect = pipe_image.get_rect()
+pipe_rect.bottom = 0
 
+# Set the bird's starting position
+bird_rect.centerx = window_size[0] // 2
+bird_rect.centery = window_size[1] // 2
 
-Getting pygame imported and initialized is a very simple process. It is also
-flexible enough to give you control over what is happening. Pygame is a
-collection of different modules in a single python package. Some of the
-modules are written in C, and some are written in python. Some modules
-are also optional, and might not always be present.
+# Set the bird's gravity
+gravity = 1.0
 
-This is just a quick introduction on what is going on when you import pygame.
-For a clearer explanation definitely see the pygame examples.
+# Set the bird's upward velocity
+velocity = 0.0
 
+# Set the pipe's starting position
+pipe_rect.left = window_size[0]
 
-Import
-------
+# Set the pipe's velocity
+pipe_velocity = -5
 
-First we must import the pygame package. Since pygame version 1.4 this
-has been updated to be much easier. Most games will import all of pygame like this. ::
+# Set the gap size between the pipes
+gap_size = 100
 
-  import pygame
-  from pygame.locals import *
+# Set the flag to indicate if the bird has collided with a pipe
+collided = False
 
-The first line here is the only necessary one. It imports all the available pygame
-modules into the pygame package. The second line is optional, and puts a limited
-set of constants and functions into the global namespace of your script.
+# Main game loop
+while True:
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            sys.exit()
 
-An important thing to keep in mind is that several pygame modules are optional.
-For example, one of these is the font module. When  you "import pygame", pygame
-will check to see if the font module is available. If the font module is available
-it will be imported as "pygame.font". If the module is not available, "pygame.font"
-will be set to None. This makes it fairly easy to later on test if the font module is available.
+    # Move the bird upward
+    velocity -= gravity
 
+    # Update the bird's position
+    bird_rect.centery += velocity
 
-Init
-----
+    # Move the pipes
+    pipe_rect.left += pipe_velocity
 
-Before you can do much with pygame, you will need to initialize it. The most common
-way to do this is just make one call. ::
+    # Check if the pipes are off the screen
+    if pipe_rect.right < 0:
+        pipe_rect.left = window_size[0]
+        gap_start = random.randint(0, window_size[1] - gap_size)
+        pipe_rect.bottom = gap_start
 
-  pygame.init()
+    # Check if the bird has collided with a pipe
+    if (bird_rect.right >= pipe_rect.left and
+        bird_rect.left <= pipe_rect.right and
+        bird_rect.bottom >= pipe_rect.bottom and
+        bird_rect.top <= pipe_rect.bottom + gap_size):
+        collided = True
 
-This will attempt to initialize all the pygame modules for you. Not all pygame modules
-need to be initialized, but this will automatically initialize the ones that do. You can
-also easily initialize each pygame module by hand. For example to only initialize the
-font module you would just call. ::
+    # Check if the bird has hit the ground
+    if bird_rect.bottom >= window_size[1]:
+        collided = True
 
-  pygame.font.init()
+    # Draw the bird and pipes
+    screen.fill((255, 255, 255))
+    screen.blit(bird_image, bird_rect)
+    screen.blit(pipe_image, pipe_rect)
+    pygame.display.update()
 
-Note that if there is an error when you initialize with "pygame.init()", it will silently fail.
-When hand initializing modules like this, any errors will raise an exception. Any
-modules that must be initialized also have a "get_init()" function, which will return true
-if the module has been initialized.
-
-It is safe to call the init() function for any module more than once.
-
-
-Quit
-----
-
-Modules that are initialized also usually have a quit() function that will clean up.
-There is no need to explicitly call these, as pygame will cleanly quit all the
-initialized modules when python finishes.
+    # If the bird has collided with a pipe or the ground, end the game
+    if collided:
+        sys.exit()
